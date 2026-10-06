@@ -1,0 +1,88 @@
+databaseChangeLog:
+  - changeSet:
+      id: 003-1-create-accounts
+      author: bankcore
+      changes:
+        - createTable:
+            tableName: accounts
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: account_number
+                  type: VARCHAR(10)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_accounts_number
+              - column:
+                  name: account_type
+                  type: VARCHAR(30)
+                  defaultValue: CUENTA_CORRIENTE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: ACTIVA
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance
+                  type: NUMERIC(15,2)
+                  defaultValueNumeric: 0.00
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: closed_at
+                  type: TIMESTAMPTZ
+  - changeSet:
+      id: 003-2-accounts-fk
+      author: bankcore
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: accounts
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_accounts_user
+            onDelete: RESTRICT
+  - changeSet:
+      id: 003-3-accounts-checks
+      author: bankcore
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: >
+              ALTER TABLE accounts ADD CONSTRAINT ck_accounts_number CHECK (account_number ~ '^[0-9]{10}$');
+              ALTER TABLE accounts ADD CONSTRAINT ck_accounts_type CHECK (account_type IN ('CUENTA_CORRIENTE'));
+              ALTER TABLE accounts ADD CONSTRAINT ck_accounts_status CHECK (status IN ('ACTIVA', 'BLOQUEADA', 'CERRADA'));
+              ALTER TABLE accounts ADD CONSTRAINT ck_accounts_balance CHECK (balance >= 0.00);
+              ALTER TABLE accounts ADD CONSTRAINT ck_accounts_closed_state CHECK ((status = 'CERRADA' AND closed_at IS NOT NULL AND balance = 0.00) OR (status IN ('ACTIVA', 'BLOQUEADA') AND closed_at IS NULL));
+      rollback: >
+        ALTER TABLE accounts DROP CONSTRAINT IF EXISTS ck_accounts_closed_state;
+        ALTER TABLE accounts DROP CONSTRAINT IF EXISTS ck_accounts_balance;
+        ALTER TABLE accounts DROP CONSTRAINT IF EXISTS ck_accounts_status;
+        ALTER TABLE accounts DROP CONSTRAINT IF EXISTS ck_accounts_type;
+        ALTER TABLE accounts DROP CONSTRAINT IF EXISTS ck_accounts_number;

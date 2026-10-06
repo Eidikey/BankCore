@@ -1,0 +1,72 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-1-create-sessions
+      author: bankcore
+      changes:
+        - createTable:
+            tableName: sessions
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: refresh_token_hash
+                  type: CHAR(64)
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_sessions_refresh_token
+              - column:
+                  name: expires_at
+                  type: TIMESTAMPTZ
+                  constraints:
+                    nullable: false
+              - column:
+                  name: revoked_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: last_used_at
+                  type: TIMESTAMPTZ
+              - column:
+                  name: user_agent
+                  type: VARCHAR(512)
+              - column:
+                  name: ip_address
+                  type: INET
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 002-2-sessions-fk
+      author: bankcore
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: sessions
+            baseColumnNames: user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_sessions_user
+            onDelete: RESTRICT
+  - changeSet:
+      id: 002-3-sessions-checks
+      author: bankcore
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: >
+              ALTER TABLE sessions ADD CONSTRAINT ck_sessions_expiration CHECK (expires_at > created_at);
+              ALTER TABLE sessions ADD CONSTRAINT ck_sessions_revocation CHECK (revoked_at IS NULL OR revoked_at >= created_at);
+      rollback: >
+        ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_revocation;
+        ALTER TABLE sessions DROP CONSTRAINT IF EXISTS ck_sessions_expiration;

@@ -1,0 +1,17 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-users.yaml
+  - include:
+      file: db/changelog/002-create-sessions.yaml
+  - include:
+      file: db/changelog/003-create-accounts.yaml
+  - include:
+      file: db/changelog/004-create-transfers.yaml
+  - include:
+      file: db/changelog/005-create-movements.yaml
+  - include:
+      file: db/changelog/006-create-idempotency-keys.yaml
+  - include:
+      file: db/changelog/007-create-audit-events.yaml
+  - include:
+      file: db/changelog/008-create-indexes.yaml
