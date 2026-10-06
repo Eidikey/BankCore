@@ -18,3 +18,9 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:/db/changelog/db.changelog-master.yaml
+springdoc:
+  # JSON contract at /v3/api-docs, UI at /swagger-ui.html (TECHNICAL-DESIGN #41).
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
