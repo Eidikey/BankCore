@@ -49,9 +49,10 @@ Estructura general:
 ```text
 BankCore/
 ├── backend/
-├── frontend/
+├── frontend/          # pendiente: aún no existe el scaffold
 ├── docs/
-└── docker-compose.yml
+├── docker-compose.yml
+├── CONTRIBUTING.md
 ```
 
 ## Reglas principales
@@ -84,11 +85,18 @@ cd BankCore
 cp .env.example .env
 ```
 
-2. Levantar la base de datos:
+2. Levantar la base de datos (PostgreSQL 16 + volumen persistente):
 
 ```bash
 docker compose up -d
-docker compose ps
+docker compose ps            # postgres "healthy"
+docker compose down          # detener (conserva datos en bankcore-pgdata)
+```
+
+Acceso directo a la base:
+
+```bash
+docker exec -it bankcore-postgres psql -U bankcore -d bankcore
 ```
 
 3. Ejecutar el backend (aplica las migraciones con Liquibase):
@@ -142,4 +150,6 @@ Ramas principales: `main` (estable) y `develop` (integración).
 Flujo básico: Issue -> rama `feature/...` o `fix/...` -> tests -> Pull Request -> revisión -> `develop` -> `main`.
 
 Evita commits directos a `main`. Usa mensajes descriptivos, por ejemplo: `feat: add user registration`, `fix: prevent concurrent withdrawals`.
+
+Convenciones completas de ramas, commits y PR en [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
