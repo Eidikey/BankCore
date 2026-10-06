@@ -66,9 +66,12 @@ BankCore/
 
 ## Inicio rápido
 
+> Guía completa con variables, Docker, backend, frontend y solución de
+> problemas en [`docs/LOCAL-DEVELOPMENT.md`](docs/LOCAL-DEVELOPMENT.md).
+
 ### Requisitos
 
-- Git, Java 25, Docker + Docker Compose, Node.js
+- Git, Java 25+, Docker + Docker Compose, Node.js (cuando exista `frontend/`)
 - No necesitas instalar PostgreSQL manualmente.
 
 ### Pasos
@@ -76,7 +79,7 @@ BankCore/
 1. Clonar y configurar entorno:
 
 ```bash
-git clone https://github.com/ORGANIZATION/BankCore.git
+git clone git@github.com:Eidikey/BankCore.git
 cd BankCore
 cp .env.example .env
 ```
@@ -92,10 +95,13 @@ docker compose ps
 
 ```bash
 cd backend
+set -a; source ../.env; set +a
 ./mvnw spring-boot:run
 ```
 
-4. Ejecutar el frontend (en otra terminal):
+API en `http://localhost:8080/api/v1`, Swagger UI en `http://localhost:8080/swagger-ui.html`.
+
+4. Frontend: **pendiente** (aún no existe `frontend/` en el repo; será React + TypeScript + Vite según el diseño). Cuando se cree:
 
 ```bash
 cd frontend
@@ -111,15 +117,11 @@ Backend:
 
 ```bash
 cd backend
-./mvnw test
+./mvnw test      # unitarios
+./mvnw verify    # + integración con PostgreSQL real (requiere Docker)
 ```
 
-Frontend:
-
-```bash
-cd frontend
-npm test
-```
+Frontend: pendiente (sin `frontend/` aún; será `npm test` cuando exista).
 
 Los tests críticos cubren autenticación, cuentas, precisión monetaria, saldo insuficiente, atomicidad, concurrencia, idempotencia y auditoría. Los tests de backend usan PostgreSQL real con Testcontainers cuando es necesario.
 
@@ -131,6 +133,7 @@ Detalles de producto, requisitos y diseño en `docs/`:
 - `SRS.md`: requisitos funcionales y no funcionales.
 - `TECHNICAL-DESIGN.md`: cómo se construye el sistema.
 - `DATABASE-DESIGN.md`: modelo relacional y concurrencia.
+- `LOCAL-DEVELOPMENT.md`: entorno local (clone, `.env`, Docker, backend, frontend).
 
 ## Flujo de trabajo
 

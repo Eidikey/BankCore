@@ -1,0 +1,90 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-1-create-movements
+      author: bankcore
+      changes:
+        - createTable:
+            tableName: movements
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: operation_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: account_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: transfer_id
+                  type: UUID
+              - column:
+                  name: type
+                  type: VARCHAR(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: NUMERIC(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: balance_after
+                  type: NUMERIC(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 005-2-movements-fks
+      author: bankcore
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: movements
+            baseColumnNames: account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            constraintName: fk_movements_account
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            baseTableName: movements
+            baseColumnNames: transfer_id
+            referencedTableName: transfers
+            referencedColumnNames: id
+            constraintName: fk_movements_transfer
+            onDelete: RESTRICT
+  - changeSet:
+      id: 005-3-movements-checks
+      author: bankcore
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: >
+              ALTER TABLE movements ADD CONSTRAINT ck_movements_type CHECK (type IN ('DEPOSIT', 'WITHDRAWAL', 'TRANSFER_DEBIT', 'TRANSFER_CREDIT'));
+              ALTER TABLE movements ADD CONSTRAINT ck_movements_amount CHECK (amount >= 1.00 AND amount <= 50000.00);
+              ALTER TABLE movements ADD CONSTRAINT ck_movements_balance CHECK (balance_after >= 0.00);
+              ALTER TABLE movements ADD CONSTRAINT ck_movements_transfer_relation CHECK ((type IN ('TRANSFER_DEBIT', 'TRANSFER_CREDIT') AND transfer_id IS NOT NULL) OR (type IN ('DEPOSIT', 'WITHDRAWAL') AND transfer_id IS NULL));
+      rollback: >
+        ALTER TABLE movements DROP CONSTRAINT IF EXISTS ck_movements_transfer_relation;
+        ALTER TABLE movements DROP CONSTRAINT IF EXISTS ck_movements_balance;
+        ALTER TABLE movements DROP CONSTRAINT IF EXISTS ck_movements_amount;
+        ALTER TABLE movements DROP CONSTRAINT IF EXISTS ck_movements_type;
+  - changeSet:
+      id: 005-4-movements-unique
+      author: bankcore
+      changes:
+        - addUniqueConstraint:
+            tableName: movements
+            columnNames: operation_id,account_id,type
+            constraintName: uk_movements_operation_account_type

@@ -1,0 +1,79 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-1-create-users
+      author: bankcore
+      changes:
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(254)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: password_hash
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: ACTIVE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failed_login_attempts
+                  type: SMALLINT
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: locked_until
+                  type: TIMESTAMPTZ
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 001-2-users-checks
+      author: bankcore
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: >
+              ALTER TABLE users ADD CONSTRAINT ck_users_role CHECK (role IN ('CLIENT', 'EMPLOYEE', 'ADMIN'));
+              ALTER TABLE users ADD CONSTRAINT ck_users_status CHECK (status IN ('ACTIVE', 'DISABLED'));
+              ALTER TABLE users ADD CONSTRAINT ck_users_failed_login_attempts CHECK (failed_login_attempts BETWEEN 0 AND 3);
+      rollback: >
+        ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_failed_login_attempts;
+        ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_status;
+        ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_role;
+  - changeSet:
+      id: 001-3-uk-users-email-ci
+      author: bankcore
+      changes:
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: CREATE UNIQUE INDEX uk_users_email_ci ON users (LOWER(email))
+      rollback: DROP INDEX IF EXISTS uk_users_email_ci

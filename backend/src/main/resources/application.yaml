@@ -1,3 +1,26 @@
 spring:
   application:
     name: backend
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: public
+        jdbc:
+          time_zone: UTC
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+springdoc:
+  # JSON contract at /v3/api-docs, UI at /swagger-ui.html (TECHNICAL-DESIGN #41).
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
