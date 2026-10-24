@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 007-1-create-audit-events
+      author: bankcore
+      changes:
+        - createTable:
+            tableName: audit_events
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: actor_user_id
+                  type: UUID
+              - column:
+                  name: event_type
+                  type: VARCHAR(80)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_type
+                  type: VARCHAR(50)
+              - column:
+                  name: target_id
+                  type: UUID
+              - column:
+                  name: operation_id
+                  type: UUID
+              - column:
+                  name: metadata
+                  type: JSONB
+                  defaultValueComputed: "'{}'::jsonb"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: ip_address
+                  type: INET
+              - column:
+                  name: user_agent
+                  type: VARCHAR(512)
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 007-2-audit-fk
+      author: bankcore
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: audit_events
+            baseColumnNames: actor_user_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_audit_actor
+            onDelete: RESTRICT

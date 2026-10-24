@@ -1,0 +1,86 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-1-create-transfers
+      author: bankcore
+      changes:
+        - createTable:
+            tableName: transfers
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: operation_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    unique: true
+                    uniqueConstraintName: uk_transfers_operation
+              - column:
+                  name: source_account_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: destination_account_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+              - column:
+                  name: amount
+                  type: NUMERIC(15,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: COMPLETED
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: completed_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+  - changeSet:
+      id: 004-2-transfers-fks
+      author: bankcore
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: transfers
+            baseColumnNames: source_account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            constraintName: fk_transfers_source
+            onDelete: RESTRICT
+        - addForeignKeyConstraint:
+            baseTableName: transfers
+            baseColumnNames: destination_account_id
+            referencedTableName: accounts
+            referencedColumnNames: id
+            constraintName: fk_transfers_destination
+            onDelete: RESTRICT
+  - changeSet:
+      id: 004-3-transfers-checks
+      author: bankcore
+      changes:
+        - sql:
+            dbms: postgresql
+            sql: >
+              ALTER TABLE transfers ADD CONSTRAINT ck_transfers_different_accounts CHECK (source_account_id <> destination_account_id);
+              ALTER TABLE transfers ADD CONSTRAINT ck_transfers_amount CHECK (amount >= 1.00 AND amount <= 50000.00);
+              ALTER TABLE transfers ADD CONSTRAINT ck_transfers_status CHECK (status IN ('COMPLETED'));
+      rollback: >
+        ALTER TABLE transfers DROP CONSTRAINT IF EXISTS ck_transfers_status;
+        ALTER TABLE transfers DROP CONSTRAINT IF EXISTS ck_transfers_amount;
+        ALTER TABLE transfers DROP CONSTRAINT IF EXISTS ck_transfers_different_accounts;

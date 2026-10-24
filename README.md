@@ -49,9 +49,10 @@ Estructura general:
 ```text
 BankCore/
 ├── backend/
-├── frontend/
+├── frontend/          # pendiente: aún no existe el scaffold
 ├── docs/
-└── docker-compose.yml
+├── docker-compose.yml
+├── CONTRIBUTING.md
 ```
 
 ## Reglas principales
@@ -66,9 +67,12 @@ BankCore/
 
 ## Inicio rápido
 
+> Guía completa con variables, Docker, backend, frontend y solución de
+> problemas en [`docs/LOCAL-DEVELOPMENT.md`](docs/LOCAL-DEVELOPMENT.md).
+
 ### Requisitos
 
-- Git, Java 25, Docker + Docker Compose, Node.js
+- Git, Java 25+, Docker + Docker Compose, Node.js (cuando exista `frontend/`)
 - No necesitas instalar PostgreSQL manualmente.
 
 ### Pasos
@@ -76,26 +80,36 @@ BankCore/
 1. Clonar y configurar entorno:
 
 ```bash
-git clone https://github.com/ORGANIZATION/BankCore.git
+git clone git@github.com:Eidikey/BankCore.git
 cd BankCore
 cp .env.example .env
 ```
 
-2. Levantar la base de datos:
+2. Levantar la base de datos (PostgreSQL 16 + volumen persistente):
 
 ```bash
 docker compose up -d
-docker compose ps
+docker compose ps            # postgres "healthy"
+docker compose down          # detener (conserva datos en bankcore-pgdata)
+```
+
+Acceso directo a la base:
+
+```bash
+docker exec -it bankcore-postgres psql -U bankcore -d bankcore
 ```
 
 3. Ejecutar el backend (aplica las migraciones con Liquibase):
 
 ```bash
 cd backend
+set -a; source ../.env; set +a
 ./mvnw spring-boot:run
 ```
 
-4. Ejecutar el frontend (en otra terminal):
+API en `http://localhost:8080/api/v1`, Swagger UI en `http://localhost:8080/swagger-ui.html`.
+
+4. Frontend: **pendiente** (aún no existe `frontend/` en el repo; será React + TypeScript + Vite según el diseño). Cuando se cree:
 
 ```bash
 cd frontend
@@ -111,15 +125,11 @@ Backend:
 
 ```bash
 cd backend
-./mvnw test
+./mvnw test      # unitarios
+./mvnw verify    # + integración con PostgreSQL real (requiere Docker)
 ```
 
-Frontend:
-
-```bash
-cd frontend
-npm test
-```
+Frontend: pendiente (sin `frontend/` aún; será `npm test` cuando exista).
 
 Los tests críticos cubren autenticación, cuentas, precisión monetaria, saldo insuficiente, atomicidad, concurrencia, idempotencia y auditoría. Los tests de backend usan PostgreSQL real con Testcontainers cuando es necesario.
 
@@ -131,6 +141,7 @@ Detalles de producto, requisitos y diseño en `docs/`:
 - `SRS.md`: requisitos funcionales y no funcionales.
 - `TECHNICAL-DESIGN.md`: cómo se construye el sistema.
 - `DATABASE-DESIGN.md`: modelo relacional y concurrencia.
+- `LOCAL-DEVELOPMENT.md`: entorno local (clone, `.env`, Docker, backend, frontend).
 
 ## Flujo de trabajo
 
@@ -139,4 +150,6 @@ Ramas principales: `main` (estable) y `develop` (integración).
 Flujo básico: Issue -> rama `feature/...` o `fix/...` -> tests -> Pull Request -> revisión -> `develop` -> `main`.
 
 Evita commits directos a `main`. Usa mensajes descriptivos, por ejemplo: `feat: add user registration`, `fix: prevent concurrent withdrawals`.
+
+Convenciones completas de ramas, commits y PR en [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

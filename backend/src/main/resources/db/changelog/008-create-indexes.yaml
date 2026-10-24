@@ -1,0 +1,114 @@
+databaseChangeLog:
+  - changeSet:
+      id: 008-1-sessions-indexes
+      author: bankcore
+      changes:
+        - createIndex:
+            tableName: sessions
+            indexName: idx_sessions_user
+            columns:
+              - column:
+                  name: user_id
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: CREATE INDEX idx_sessions_active ON sessions(user_id, expires_at) WHERE revoked_at IS NULL
+      rollback: DROP INDEX IF EXISTS idx_sessions_active
+  - changeSet:
+      id: 008-2-accounts-indexes
+      author: bankcore
+      changes:
+        - createIndex:
+            tableName: accounts
+            indexName: idx_accounts_user
+            columns:
+              - column:
+                  name: user_id
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: CREATE INDEX idx_accounts_user_open ON accounts(user_id) WHERE status <> 'CERRADA'
+      rollback: DROP INDEX IF EXISTS idx_accounts_user_open
+  - changeSet:
+      id: 008-3-transfers-indexes
+      author: bankcore
+      changes:
+        - createIndex:
+            tableName: transfers
+            indexName: idx_transfers_source_created
+            columns:
+              - column:
+                  name: source_account_id
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            tableName: transfers
+            indexName: idx_transfers_destination_created
+            columns:
+              - column:
+                  name: destination_account_id
+              - column:
+                  name: created_at
+                  descending: true
+  - changeSet:
+      id: 008-4-movements-indexes
+      author: bankcore
+      changes:
+        - createIndex:
+            tableName: movements
+            indexName: idx_movements_account_created
+            columns:
+              - column:
+                  name: account_id
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            tableName: movements
+            indexName: idx_movements_operation
+            columns:
+              - column:
+                  name: operation_id
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: CREATE INDEX idx_movements_transfer ON movements(transfer_id) WHERE transfer_id IS NOT NULL
+      rollback: DROP INDEX IF EXISTS idx_movements_transfer
+  - changeSet:
+      id: 008-5-idempotency-indexes
+      author: bankcore
+      changes:
+        - createIndex:
+            tableName: idempotency_keys
+            indexName: idx_idempotency_created
+            columns:
+              - column:
+                  name: created_at
+  - changeSet:
+      id: 008-6-audit-indexes
+      author: bankcore
+      changes:
+        - createIndex:
+            tableName: audit_events
+            indexName: idx_audit_actor_created
+            columns:
+              - column:
+                  name: actor_user_id
+              - column:
+                  name: created_at
+                  descending: true
+        - createIndex:
+            tableName: audit_events
+            indexName: idx_audit_event_created
+            columns:
+              - column:
+                  name: event_type
+              - column:
+                  name: created_at
+                  descending: true
+        - sql:
+            dbms: postgresql
+            splitStatements: false
+            sql: CREATE INDEX idx_audit_operation ON audit_events(operation_id) WHERE operation_id IS NOT NULL
+      rollback: DROP INDEX IF EXISTS idx_audit_operation

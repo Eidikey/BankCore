@@ -386,9 +386,17 @@ User
 ├── status
 ├── failed_login_attempts
 ├── locked_until
+├── first_name
+├── last_name
+├── birth_date
+├── gender
+├── occupation
 ├── created_at
 └── updated_at
 ```
+
+La edad no se persiste: se deriva de `birth_date` para que no quede
+desactualizada. El registro exige mayoría de edad (18–120 años).
 
 ## 13.1 Enum formal de roles
 
@@ -428,7 +436,7 @@ Database
 ```
 
 Las contraseñas nunca serán almacenadas en texto plano ni registradas en
-logs.
+logs. Parámetros base: Argon2id, 19 MiB, 2 iteraciones y paralelismo 1.
 
 ------------------------------------------------------------------------
 
@@ -469,7 +477,20 @@ Authorization: Bearer <access-token>
 ```
 
 El JWT contendrá únicamente claims necesarios para
-autenticación/autorización.
+autenticación/autorización:
+
+```json
+{
+  "iss": "bankcore",
+  "sub": "user-uuid",
+  "sid": "session-uuid",
+  "role": "CLIENT",
+  "iat": "2026-10-23T20:00:00Z",
+  "exp": "2026-10-23T20:15:00Z"
+}
+```
+
+`sid` permite validar la sesión en cada request y revocarla de inmediato.
 
 No contendrá:
 
@@ -494,11 +515,13 @@ Conceptualmente:
 Session
 ├── id
 ├── user_id
-├── refresh_token
+├── refresh_token_hash
 ├── expires_at
 ├── revoked_at
 ├── created_at
-└── last_used_at
+├── last_used_at
+├── user_agent
+└── ip_address
 ```
 
 Cada login crea una sesión independiente.
@@ -514,9 +537,12 @@ Esto permite:
 El Refresh Token no será un JWT.
 
 Para producción deberá evitarse almacenar un secreto reutilizable
-innecesariamente en texto plano; la implementación puede persistir una
-representación segura/hash del token manteniendo el UUID opaco entregado
-al cliente.
+innecesariamente en texto plano; la implementación persiste
+`SHA-256(refreshToken)` en `sessions.refresh_token_hash` y entrega al
+cliente únicamente el UUID opaco.
+
+En esta fase el refresh no rota: cada renovación valida la sesión y emite
+un nuevo access token. La rotación queda como decisión posterior.
 
 ------------------------------------------------------------------------
 
@@ -1165,6 +1191,7 @@ Todas las rutas tendrán versión:
 Ejemplos:
 
 ``` text
+/api/v1/auth/register
 /api/v1/auth/login
 /api/v1/auth/refresh
 /api/v1/auth/logout
@@ -1300,6 +1327,7 @@ DATABASE_USERNAME=
 DATABASE_PASSWORD=
 
 JWT_SECRET=
+# HS256: mínimo 32 bytes
 ACCESS_TOKEN_TTL_MINUTES=15
 REFRESH_TOKEN_TTL_DAYS=
 
