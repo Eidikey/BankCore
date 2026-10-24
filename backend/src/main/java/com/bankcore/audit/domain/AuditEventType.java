@@ -1,0 +1,19 @@
+package com.bankcore.audit.domain;
+
+/**
+ * Persistent audit event names (SRS RF-039, DATABASE-DESIGN #22).
+ */
+public enum AuditEventType {
+    AUTH_LOGIN_SUCCESS,
+    AUTH_LOGIN_FAILURE,
+    AUTH_TEMP_LOCK,
+    AUTH_LOGOUT,
+    ACCOUNT_CREATED,
+    ACCOUNT_BLOCKED,
+    ACCOUNT_UNBLOCKED,
+    ACCOUNT_CLOSED,
+    DEPOSIT_COMPLETED,
+    WITHDRAWAL_COMPLETED,
+    TRANSFER_COMPLETED,
+    ADMIN_ACTION
+}

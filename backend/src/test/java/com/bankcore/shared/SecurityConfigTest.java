@@ -7,6 +7,8 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.UUID;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -54,6 +56,9 @@ class SecurityConfigTest {
                 .andExpect(status().isUnauthorized());
 
         mockMvc.perform(post("/api/v1/accounts"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/v1/accounts/{id}/close", UUID.randomUUID()))
                 .andExpect(status().isUnauthorized());
     }
 
