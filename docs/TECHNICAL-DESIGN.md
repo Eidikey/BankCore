@@ -1197,7 +1197,6 @@ Ejemplos:
 /api/v1/auth/logout
 /api/v1/accounts
 /api/v1/accounts/{id}
-/api/v1/accounts/{id}/close
 /api/v1/transfers
 /api/v1/movements
 ```
