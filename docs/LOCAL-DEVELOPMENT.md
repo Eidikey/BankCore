@@ -93,6 +93,9 @@ URLs locales (puerto 8080 por defecto):
 | OpenAPI JSON | `http://localhost:8080/v3/api-docs` |
 | Swagger UI | `http://localhost:8080/swagger-ui.html` |
 
+OpenAPI, Swagger UI y `/actuator/health` son públicos. El resto de rutas exige
+autenticación (HTTP Basic por ahora; JWT llega en la fase de autenticación).
+
 Tests:
 
 ```bash
@@ -124,7 +127,7 @@ docker compose up -d
 cd backend && set -a; source ../.env; set +a && ./mvnw verify
 ```
 
-Éxito = `BUILD SUCCESS` con `Tests run: 15/15` unitarios y `2/2` de integración,
+Éxito = `BUILD SUCCESS` con `Tests run: 19/19` unitarios y `2/2` de integración,
 y `http://localhost:8080/swagger-ui.html` responde.
 
 ## 7. Problemas comunes
