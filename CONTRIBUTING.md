@@ -56,9 +56,3 @@ Trabajo realizado en esta sesión, integrado en `develop`:
 6. **Documentación** — `docs/LOCAL-DEVELOPMENT.md`, README actualizado, `.env.example` comentado.
 7. **Merges** — resueltos conflictos con `origin/develop` (`.env.example`, `.gitignore`, `docker-compose.yml`; se descartó `postgres:18` y `test.yml` basura), rama puesta al día con `origin/Docs`, eliminadas ramas ya fusionadas (`GlobalErrors`, `LiquidBase`, `OpenAPI`, `Testcontainers`, `postgres-docker`, `Docs`).
 8. **Decisiones fijadas** — Postgres 16 en todo; `ErrorResponse` custom (no `ProblemDetail`); frontend pendiente; verificación manual de Swagger UI pendiente.
-
-## 6. Sesión 2026-10-23
-
-1. **Cierre de cuenta propia** — `POST /api/v1/accounts/{id}/close`; solo con saldo `0.00`, estado `CERRADA` permanente, `404` para cuentas ajenas, `409` si ya está cerrada y `422` si el saldo no es cero.
-2. **Auditoría** — eventos de login correcto/fallido, bloqueo temporal y logout (`AUTH_*`), además de creación y cierre de cuenta (`ACCOUNT_CREATED`, `ACCOUNT_CLOSED`); sin passwords, JWT ni refresh tokens en metadata.
-3. **Pruebas** — `49` unitarias y `24` de integración en verde con `./mvnw verify` desde `backend/`.

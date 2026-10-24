@@ -254,81 +254,6 @@ class AuthFlowIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void successfulLoginWritesAuditEvent() throws Exception {
-        String email = uniqueEmail("audit-login");
-        register(email);
-
-        login(email, PASSWORD);
-
-        Map<String, Object> event = jdbcTemplate.queryForMap(
-                "select actor_user_id, target_type, target_id, ip_address, user_agent "
-                        + "from audit_events where event_type = 'AUTH_LOGIN_SUCCESS' "
-                        + "and actor_user_id = ?",
-                userId(email));
-        assertThat(event.get("actor_user_id")).isEqualTo(userId(email));
-        assertThat(event.get("target_type")).isEqualTo("USER");
-        assertThat(event.get("target_id")).isEqualTo(userId(email));
-        assertThat(event.get("ip_address")).isNotNull();
-        assertThat(event.get("user_agent")).isEqualTo("JUnit-Agent");
-    }
-
-    @Test
-    void failedLoginsAndTemporaryLockWriteAuditEvents() throws Exception {
-        String email = uniqueEmail("audit-lock");
-        register(email);
-
-        for (int attempt = 1; attempt <= 3; attempt++) {
-            mockMvc.perform(post("/api/v1/auth/login")
-                            .header("User-Agent", "JUnit-Agent")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(loginBody(email, "wrong-password")))
-                    .andExpect(status().isUnauthorized());
-        }
-
-        Map<String, Object> counts = jdbcTemplate.queryForMap(
-                "select count(*) filter (where event_type = 'AUTH_LOGIN_FAILURE') as failures, "
-                        + "count(*) filter (where event_type = 'AUTH_TEMP_LOCK') as locks "
-                        + "from audit_events where actor_user_id = ?",
-                userId(email));
-        assertThat(((Number) counts.get("failures")).intValue()).isEqualTo(3);
-        assertThat(((Number) counts.get("locks")).intValue()).isEqualTo(1);
-
-        Map<String, Object> lockEvent = jdbcTemplate.queryForMap(
-                "select target_type, target_id, metadata::text as metadata "
-                        + "from audit_events where event_type = 'AUTH_TEMP_LOCK' "
-                        + "and actor_user_id = ?",
-                userId(email));
-        assertThat(lockEvent.get("target_type")).isEqualTo("USER");
-        assertThat(lockEvent.get("target_id")).isEqualTo(userId(email));
-        assertThat((String) lockEvent.get("metadata")).contains("lockedUntil");
-    }
-
-    @Test
-    void logoutWritesAuditEvent() throws Exception {
-        String email = uniqueEmail("audit-logout");
-        register(email);
-        SessionTokens tokens = login(email, PASSWORD);
-
-        mockMvc.perform(post("/api/v1/auth/logout")
-                        .header("User-Agent", "JUnit-Agent")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"refreshToken":"%s"}
-                                """.formatted(tokens.refreshToken())))
-                .andExpect(status().isNoContent());
-
-        Map<String, Object> event = jdbcTemplate.queryForMap(
-                "select actor_user_id, target_type, target_id, user_agent "
-                        + "from audit_events where event_type = 'AUTH_LOGOUT' "
-                        + "and actor_user_id = ?",
-                userId(email));
-        assertThat(event.get("actor_user_id")).isEqualTo(userId(email));
-        assertThat(event.get("target_type")).isEqualTo("USER");
-        assertThat(event.get("target_id")).isEqualTo(userId(email));
-        assertThat(event.get("user_agent")).isEqualTo("JUnit-Agent");
-    }
-
-    @Test
     void underageRegistrationIsRejected() throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -365,7 +290,6 @@ class AuthFlowIT extends AbstractIntegrationTest {
 
     private SessionTokens login(String email, String password) throws Exception {
         MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
-                        .header("User-Agent", "JUnit-Agent")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(loginBody(email, password)))
                 .andExpect(status().isOk())
@@ -397,11 +321,6 @@ class AuthFlowIT extends AbstractIntegrationTest {
         return """
                 {"email":"%s","password":"%s"}
                 """.formatted(email, password);
-    }
-
-    private UUID userId(String email) {
-        return jdbcTemplate.queryForObject(
-                "select id from users where email = ?", UUID.class, email);
     }
 
     private String uniqueEmail(String prefix) {

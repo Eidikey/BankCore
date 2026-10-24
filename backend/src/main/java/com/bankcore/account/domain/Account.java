@@ -100,27 +100,6 @@ public class Account {
                 null);
     }
 
-    /**
-     * Permanently closes an open account. The service validates ownership and
-     * maps the business errors; this method also protects the invariant for
-     * callers inside the domain.
-     */
-    public void close(Instant now) {
-        if (status == AccountStatus.CERRADA) {
-            throw new IllegalStateException("Account is already closed");
-        }
-        if (balance == null || balance.compareTo(BigDecimal.ZERO) != 0) {
-            throw new IllegalStateException("Account can only be closed with zero balance");
-        }
-        status = AccountStatus.CERRADA;
-        closedAt = now;
-        updatedAt = now;
-    }
-
-    public boolean isClosed() {
-        return status == AccountStatus.CERRADA;
-    }
-
     public UUID getId() {
         return id;
     }
