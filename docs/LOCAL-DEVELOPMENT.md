@@ -147,6 +147,11 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 Tras 3 intentos fallidos la cuenta se bloquea 15 minutos. Los intentos durante
 el bloqueo no reinician el temporizador.
 
+Cada login correcto, login fallido, bloqueo temporal y logout se registra en
+`audit_events` (`AUTH_LOGIN_SUCCESS`, `AUTH_LOGIN_FAILURE`, `AUTH_TEMP_LOCK`,
+`AUTH_LOGOUT`). La auditoría guarda actor, tipo/ID de objetivo, IP, user-agent y
+metadatos acotados; nunca almacena passwords, JWT ni refresh tokens.
+
 ### Cuentas
 
 Crear una cuenta propia (máximo 5 cuentas no cerradas; se crea `ACTIVA`, tipo
@@ -171,8 +176,19 @@ curl http://localhost:8080/api/v1/accounts/<uuid> \
   -H "Authorization: Bearer <access-token>"
 ```
 
+Cerrar una cuenta propia. Solo se permite con saldo `0.00`; el cambio a
+`CERRADA` es permanente y no se puede reactivar ni borrar físicamente:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/accounts/<uuid>/close \
+  -H "Authorization: Bearer <access-token>"
+```
+
 Si la cuenta pertenece a otro cliente, la respuesta es `404 ACCOUNT_NOT_FOUND`
-para no filtrar su existencia. Las cuentas cerradas siguen visibles en el
+para no filtrar su existencia. Una cuenta con saldo distinto de cero responde
+`422 ACCOUNT_CLOSE_REQUIRES_ZERO_BALANCE`; un segundo cierre responde
+`409 ACCOUNT_CLOSED`. La creación y el cierre registran `ACCOUNT_CREATED` y
+`ACCOUNT_CLOSED` en `audit_events`. Las cuentas cerradas siguen visibles en el
 listado y no cuentan para el límite de 5.
 
 Tests:
@@ -206,7 +222,7 @@ docker compose up -d
 cd backend && set -a; source ../.env; set +a && ./mvnw verify
 ```
 
-Éxito = `BUILD SUCCESS` con `Tests run: 42/42` unitarios y `17/17` de integración,
+Éxito = `BUILD SUCCESS` con `Tests run: 49/49` unitarios y `24/24` de integración,
 y `http://localhost:8080/swagger-ui.html` responde.
 
 ## 7. Problemas comunes
