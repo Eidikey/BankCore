@@ -50,10 +50,16 @@ public class LoginService {
 
         User user = maybeUser.get();
         if (!user.isActive()) {
+            // Keep timing close to a real verification without revealing the status.
+            passwordEncoder.matches(rawPassword, user.getPasswordHash());
             return new LoginOutcome.InvalidCredentials();
         }
 
         if (user.isLocked(now)) {
+            // The distinct locked code is a product requirement; still pay the
+            // hashing cost so a locked account is not trivially distinguishable
+            // by response time.
+            passwordEncoder.matches(rawPassword, user.getPasswordHash());
             return new LoginOutcome.Locked(user.getLockedUntil());
         }
 

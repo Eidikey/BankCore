@@ -49,6 +49,15 @@ class SecurityConfigTest {
     }
 
     @Test
+    void accountRoutesRequireAuthentication() throws Exception {
+        mockMvc.perform(get("/api/v1/accounts"))
+                .andExpect(status().isUnauthorized());
+
+        mockMvc.perform(post("/api/v1/accounts"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void authRoutesArePublic() throws Exception {
         mockMvc.perform(post("/api/v1/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -57,7 +57,11 @@ public class RegisterUserService {
             return users.saveAndFlush(user);
         } catch (DataIntegrityViolationException ex) {
             // The unique index is the final guard against concurrent registrations.
-            throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            String message = ex.getMessage() == null ? "" : ex.getMessage().toLowerCase(Locale.ROOT);
+            if (message.contains("uk_users_email") || message.contains("users_email")) {
+                throw new ConflictException(ErrorCode.EMAIL_ALREADY_EXISTS);
+            }
+            throw ex;
         }
     }
 

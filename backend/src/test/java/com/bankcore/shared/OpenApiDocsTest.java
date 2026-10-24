@@ -45,6 +45,9 @@ class OpenApiDocsTest {
                 .andExpect(jsonPath("$.paths./api/v1/auth/login.post").exists())
                 .andExpect(jsonPath("$.paths./api/v1/auth/refresh.post").exists())
                 .andExpect(jsonPath("$.paths./api/v1/auth/logout.post").exists())
+                .andExpect(jsonPath("$.paths./api/v1/accounts.post").exists())
+                .andExpect(jsonPath("$.paths./api/v1/accounts.get").exists())
+                .andExpect(jsonPath("$.paths./api/v1/accounts/{id}.get").exists())
                 .andExpect(jsonPath("$.paths./api/v1/test-errors/bad-request.get").exists());
     }
 
