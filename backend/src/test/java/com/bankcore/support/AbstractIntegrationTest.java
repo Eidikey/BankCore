@@ -18,7 +18,10 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * {@code ./mvnw verify} (failsafe), not with {@code ./mvnw test} (surefire).
  */
 @Testcontainers
-@SpringBootTest(properties = "spring.liquibase.enabled=true")
+@SpringBootTest(properties = {
+        "spring.liquibase.enabled=true",
+        "spring.jpa.hibernate.ddl-auto=validate"
+})
 public abstract class AbstractIntegrationTest {
 
     @Container

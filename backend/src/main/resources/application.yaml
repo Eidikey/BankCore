@@ -24,3 +24,11 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+security:
+  jwt:
+    # HS256 requires at least 32 bytes. Never commit a real production secret.
+    secret: ${JWT_SECRET}
+    issuer: bankcore
+    access-token-ttl: ${ACCESS_TOKEN_TTL_MINUTES:15}m
+    refresh-token-ttl: ${REFRESH_TOKEN_TTL_DAYS:30}d

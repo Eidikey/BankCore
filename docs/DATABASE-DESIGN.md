@@ -121,6 +121,12 @@ CREATE TABLE users (
     email VARCHAR(254) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
 
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    birth_date DATE NOT NULL,
+    gender VARCHAR(20) NOT NULL,
+    occupation VARCHAR(100) NOT NULL,
+
     role VARCHAR(20) NOT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
 
@@ -147,6 +153,30 @@ CREATE TABLE users (
             )
         ),
 
+    CONSTRAINT ck_users_gender
+        CHECK (
+            gender IN (
+                'MALE',
+                'FEMALE',
+                'OTHER',
+                'PREFER_NOT_TO_SAY'
+            )
+        ),
+
+    CONSTRAINT ck_users_birth_date
+        CHECK (
+            birth_date <= (CURRENT_DATE - INTERVAL '18 years')::date
+        ),
+
+    CONSTRAINT ck_users_first_name_not_blank
+        CHECK (length(trim(first_name)) > 0),
+
+    CONSTRAINT ck_users_last_name_not_blank
+        CHECK (length(trim(last_name)) > 0),
+
+    CONSTRAINT ck_users_occupation_not_blank
+        CHECK (length(trim(occupation)) > 0),
+
     CONSTRAINT ck_users_failed_login_attempts
         CHECK (
             failed_login_attempts BETWEEN 0 AND 3
@@ -172,6 +202,20 @@ public enum Role {
     ADMIN
 }
 ```
+
+`gender` corresponde al enum:
+
+```java
+public enum Gender {
+    MALE,
+    FEMALE,
+    OTHER,
+    PREFER_NOT_TO_SAY
+}
+```
+
+La edad no se almacena: se deriva de `birth_date`. El registro exige que el
+cliente sea mayor de edad (18–120 años).
 
 El bloqueo de autenticación:
 

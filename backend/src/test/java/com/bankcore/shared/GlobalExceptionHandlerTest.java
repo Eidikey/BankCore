@@ -68,6 +68,14 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
+    void emailConstraintConflict_returnsEmailAlreadyExists() throws Exception {
+        mockMvc.perform(get("/api/v1/test-errors/email-conflict"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value(ErrorCode.EMAIL_ALREADY_EXISTS.name()));
+    }
+
+    @Test
     void unprocessable_returns422WithErrorCode() throws Exception {
         mockMvc.perform(get("/api/v1/test-errors/unprocessable"))
                 .andExpect(status().isUnprocessableEntity())
@@ -128,5 +136,23 @@ class GlobalExceptionHandlerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.code").value(ErrorCode.RESOURCE_NOT_FOUND.name()));
+    }
+
+    @Test
+    void wrongMethod_returns405() throws Exception {
+        mockMvc.perform(post("/api/v1/test-errors/bad-request"))
+                .andExpect(status().isMethodNotAllowed())
+                .andExpect(jsonPath("$.status").value(405))
+                .andExpect(jsonPath("$.code").value(ErrorCode.METHOD_NOT_ALLOWED.name()));
+    }
+
+    @Test
+    void unsupportedMediaType_returns415() throws Exception {
+        mockMvc.perform(post("/api/v1/test-errors/validation")
+                        .contentType(MediaType.TEXT_PLAIN)
+                        .content("not json"))
+                .andExpect(status().isUnsupportedMediaType())
+                .andExpect(jsonPath("$.status").value(415))
+                .andExpect(jsonPath("$.code").value(ErrorCode.UNSUPPORTED_MEDIA_TYPE.name()));
     }
 }
