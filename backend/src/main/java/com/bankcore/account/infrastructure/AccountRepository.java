@@ -2,9 +2,7 @@ package com.bankcore.account.infrastructure;
 
 import com.bankcore.account.domain.Account;
 import com.bankcore.account.domain.AccountStatus;
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -19,16 +17,6 @@ public interface AccountRepository extends JpaRepository<Account, UUID> {
 
     @Query("select a from Account a where a.id = :accountId and a.user.id = :userId")
     Optional<Account> findOwnedById(
-            @Param("accountId") UUID accountId,
-            @Param("userId") UUID userId);
-
-    /**
-     * Locks the owned account while closing it so a concurrent financial
-     * operation cannot change the balance between the zero check and update.
-     */
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select a from Account a where a.id = :accountId and a.user.id = :userId")
-    Optional<Account> findOwnedByIdForUpdate(
             @Param("accountId") UUID accountId,
             @Param("userId") UUID userId);
 

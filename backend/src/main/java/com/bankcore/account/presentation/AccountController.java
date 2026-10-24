@@ -60,14 +60,6 @@ public class AccountController {
         return AccountResponse.from(accountService.getOwn(currentUserId(jwt), id));
     }
 
-    @PostMapping("/{id}/close")
-    @Operation(
-            summary = "Close own account",
-            description = "Permanently closes an account with zero balance; closed accounts cannot be reactivated")
-    public AccountResponse close(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID id) {
-        return AccountResponse.from(accountService.close(currentUserId(jwt), id));
-    }
-
     private UUID currentUserId(Jwt jwt) {
         try {
             return UUID.fromString(jwt.getSubject());

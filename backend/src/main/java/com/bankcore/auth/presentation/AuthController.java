@@ -92,13 +92,8 @@ public class AuthController {
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Logout", description = "Revokes the session identified by the refresh token")
-    public void logout(
-            @Valid @RequestBody RefreshTokenRequest request,
-            HttpServletRequest httpRequest) {
-        sessionService.logout(
-                request.refreshToken(),
-                httpRequest.getHeader("User-Agent"),
-                clientIp(httpRequest));
+    public void logout(@Valid @RequestBody RefreshTokenRequest request) {
+        sessionService.logout(request.refreshToken());
     }
 
     private void noStore(HttpServletResponse response) {
