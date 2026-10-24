@@ -41,6 +41,10 @@ class OpenApiDocsTest {
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.bearerFormat").value("JWT"))
+                .andExpect(jsonPath("$.paths./api/v1/auth/register.post").exists())
+                .andExpect(jsonPath("$.paths./api/v1/auth/login.post").exists())
+                .andExpect(jsonPath("$.paths./api/v1/auth/refresh.post").exists())
+                .andExpect(jsonPath("$.paths./api/v1/auth/logout.post").exists())
                 .andExpect(jsonPath("$.paths./api/v1/test-errors/bad-request.get").exists());
     }
 

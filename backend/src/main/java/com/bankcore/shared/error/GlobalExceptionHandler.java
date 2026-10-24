@@ -18,6 +18,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -134,7 +136,11 @@ public class GlobalExceptionHandler {
         log.warn("Data integrity violation: path={}, error={}", request.getRequestURI(), message);
 
         String lower = message != null ? message.toLowerCase() : "";
-        if (lower.contains("uk_users_email") || lower.contains("uk_accounts_number") || lower.contains("account_number")) {
+        if (lower.contains("uk_users_email") || lower.contains("users_email")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(build(request, HttpStatus.CONFLICT.value(), ErrorCode.EMAIL_ALREADY_EXISTS));
+        }
+        if (lower.contains("uk_accounts_number") || lower.contains("account_number")) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(build(request, HttpStatus.CONFLICT.value(), ErrorCode.ACCOUNT_NUMBER_CONFLICT));
         }
@@ -172,6 +178,10 @@ public class GlobalExceptionHandler {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(build(request, HttpStatus.CONFLICT.value(), ErrorCode.DUPLICATE_OPERATION));
             }
+            if (constraint.contains("users_email") || constraint.contains("uk_users_email")) {
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(build(request, HttpStatus.CONFLICT.value(), ErrorCode.EMAIL_ALREADY_EXISTS));
+            }
             if (constraint.contains("account_number")) {
                 return ResponseEntity.status(HttpStatus.CONFLICT)
                         .body(build(request, HttpStatus.CONFLICT.value(), ErrorCode.ACCOUNT_NUMBER_CONFLICT));
@@ -183,6 +193,24 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(build(request, HttpStatus.CONFLICT.value(), ErrorCode.CONCURRENCY_CONFLICT));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex,
+            HttpServletRequest request) {
+        log.warn("Method not allowed: path={}, method={}", request.getRequestURI(), ex.getMethod());
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(build(request, HttpStatus.METHOD_NOT_ALLOWED.value(), ErrorCode.METHOD_NOT_ALLOWED));
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ErrorResponse> handleMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException ex,
+            HttpServletRequest request) {
+        log.warn("Unsupported media type: path={}, contentType={}", request.getRequestURI(), ex.getContentType());
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(build(request, HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(), ErrorCode.UNSUPPORTED_MEDIA_TYPE));
     }
 
     @ExceptionHandler(Exception.class)

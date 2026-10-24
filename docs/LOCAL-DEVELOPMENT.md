@@ -35,7 +35,7 @@ cp .env.example .env
 | `DATABASE_PASSWORD` | Password DB backend y `POSTGRES_PASSWORD` | `bankcore` |
 | `POSTGRES_DB` | Base creada por el contenedor | `bankcore` |
 | `POSTGRES_PORT` | Puerto publicado en tu máquina | `5432` |
-| `JWT_SECRET` | Firma de JWT. **Cámbialo** fuera de local | `change-me` |
+| `JWT_SECRET` | Firma de JWT (mínimo 32 bytes para HS256). **Cámbialo** fuera de local | `dev-only-change-me-32-characters-min` |
 | `ACCESS_TOKEN_TTL_MINUTES` | Vida del access JWT | `15` |
 | `REFRESH_TOKEN_TTL_DAYS` | Vida del refresh token | `30` |
 
@@ -93,8 +93,59 @@ URLs locales (puerto 8080 por defecto):
 | OpenAPI JSON | `http://localhost:8080/v3/api-docs` |
 | Swagger UI | `http://localhost:8080/swagger-ui.html` |
 
-OpenAPI, Swagger UI y `/actuator/health` son públicos. El resto de rutas exige
-autenticación (HTTP Basic por ahora; JWT llega en la fase de autenticación).
+OpenAPI, Swagger UI y `/actuator/health` son públicos. Las rutas de registro,
+login, refresh y logout también son públicas; el resto exige un JWT válido:
+
+```http
+Authorization: Bearer <access-token>
+```
+
+### Autenticación
+
+Registro de cliente (datos personales + credenciales):
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "email": "ana@example.com",
+    "password": "una-clave-segura",
+    "firstName": "Ana",
+    "lastName": "García",
+    "birthDate": "1995-04-12",
+    "gender": "FEMALE",
+    "occupation": "Software engineer"
+  }'
+```
+
+Login:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"ana@example.com","password":"una-clave-segura"}'
+```
+
+La respuesta incluye `accessToken` (15 min) y `refreshToken` (UUID opaco, 30
+días). El refresh token se guarda en la base de datos solo como SHA-256 y no
+rota en esta fase. Para renovar el access token:
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<uuid>"}'
+```
+
+Logout (revoca solo esa sesión):
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/logout \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<uuid>"}'
+```
+
+Tras 3 intentos fallidos la cuenta se bloquea 15 minutos. Los intentos durante
+el bloqueo no reinician el temporizador.
 
 Tests:
 
@@ -127,7 +178,7 @@ docker compose up -d
 cd backend && set -a; source ../.env; set +a && ./mvnw verify
 ```
 
-Éxito = `BUILD SUCCESS` con `Tests run: 19/19` unitarios y `2/2` de integración,
+Éxito = `BUILD SUCCESS` con `Tests run: 32/32` unitarios y `12/12` de integración,
 y `http://localhost:8080/swagger-ui.html` responde.
 
 ## 7. Problemas comunes

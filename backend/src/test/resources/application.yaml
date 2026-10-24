@@ -5,3 +5,10 @@ spring:
     hibernate:
       ddl-auto: none
     open-in-view: false
+
+security:
+  jwt:
+    secret: test-only-secret-with-at-least-32-bytes
+    issuer: bankcore
+    access-token-ttl: 15m
+    refresh-token-ttl: 30d

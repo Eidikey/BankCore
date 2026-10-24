@@ -20,6 +20,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.ResponseEntity;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -79,6 +80,14 @@ class TestErrorController {
     @GetMapping("/conflict")
     ResponseEntity<Void> conflict() {
         throw new ConflictException(ErrorCode.INSUFFICIENT_BALANCE);
+    }
+
+    @Operation(summary = "Trigger a users email uniqueness conflict")
+    @ApiResponse(responseCode = "409", description = "Email already exists",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    @GetMapping("/email-conflict")
+    ResponseEntity<Void> emailConflict() {
+        throw new DataIntegrityViolationException("duplicate key value violates unique constraint uk_users_email_ci");
     }
 
     @Operation(summary = "Trigger a 422 semantic error")

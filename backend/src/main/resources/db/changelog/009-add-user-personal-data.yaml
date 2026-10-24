@@ -1,0 +1,110 @@
+databaseChangeLog:
+  - changeSet:
+      id: 009-1-add-user-personal-data
+      author: bankcore
+      dbms: postgresql
+      comment: >-
+        Adds the personal data collected during onboarding. The placeholder
+        values only apply to users created before this migration; normal
+        deployments start with an empty users table.
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: first_name
+                  type: VARCHAR(100)
+              - column:
+                  name: last_name
+                  type: VARCHAR(100)
+              - column:
+                  name: birth_date
+                  type: DATE
+              - column:
+                  name: gender
+                  type: VARCHAR(20)
+              - column:
+                  name: occupation
+                  type: VARCHAR(100)
+        - update:
+            tableName: users
+            columns:
+              - column:
+                  name: first_name
+                  value: UNKNOWN
+              - column:
+                  name: last_name
+                  value: UNKNOWN
+              - column:
+                  name: birth_date
+                  valueComputed: DATE '1970-01-01'
+              - column:
+                  name: gender
+                  value: PREFER_NOT_TO_SAY
+              - column:
+                  name: occupation
+                  value: UNKNOWN
+        - addNotNullConstraint:
+            tableName: users
+            columnName: first_name
+            columnDataType: VARCHAR(100)
+        - addNotNullConstraint:
+            tableName: users
+            columnName: last_name
+            columnDataType: VARCHAR(100)
+        - addNotNullConstraint:
+            tableName: users
+            columnName: birth_date
+            columnDataType: DATE
+        - addNotNullConstraint:
+            tableName: users
+            columnName: gender
+            columnDataType: VARCHAR(20)
+        - addNotNullConstraint:
+            tableName: users
+            columnName: occupation
+            columnDataType: VARCHAR(100)
+        - sql:
+            sql: >-
+              ALTER TABLE users
+              ADD CONSTRAINT ck_users_gender
+              CHECK (gender IN ('MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'))
+        - sql:
+            sql: >-
+              ALTER TABLE users
+              ADD CONSTRAINT ck_users_first_name_not_blank
+              CHECK (length(trim(first_name)) > 0)
+        - sql:
+            sql: >-
+              ALTER TABLE users
+              ADD CONSTRAINT ck_users_last_name_not_blank
+              CHECK (length(trim(last_name)) > 0)
+        - sql:
+            sql: >-
+              ALTER TABLE users
+              ADD CONSTRAINT ck_users_occupation_not_blank
+              CHECK (length(trim(occupation)) > 0)
+      rollback:
+        - sql:
+            sql: ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_gender
+        - sql:
+            sql: ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_first_name_not_blank
+        - sql:
+            sql: ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_last_name_not_blank
+        - sql:
+            sql: ALTER TABLE users DROP CONSTRAINT IF EXISTS ck_users_occupation_not_blank
+        - dropColumn:
+            tableName: users
+            columnName: occupation
+        - dropColumn:
+            tableName: users
+            columnName: gender
+        - dropColumn:
+            tableName: users
+            columnName: birth_date
+        - dropColumn:
+            tableName: users
+            columnName: last_name
+        - dropColumn:
+            tableName: users
+            columnName: first_name
