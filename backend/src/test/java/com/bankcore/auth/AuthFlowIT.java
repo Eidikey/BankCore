@@ -7,9 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Map;
 import java.util.UUID;
@@ -31,6 +34,26 @@ class AuthFlowIT extends AbstractIntegrationTest {
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private JwtDecoder jwtDecoder;
+
+    @Test
+    void accessTokenHasFifteenMinuteLifetimeAndSessionClaims() throws Exception {
+        String email = uniqueEmail("claims");
+        register(email);
+        SessionTokens tokens = login(email, PASSWORD);
+
+        Jwt jwt = jwtDecoder.decode(tokens.accessToken());
+
+        assertThat(jwt.getClaimAsString("iss")).isEqualTo("bankcore");
+        assertThat(jwt.getClaimAsString("role")).isEqualTo("CLIENT");
+        assertThat(jwt.getClaimAsString("sid")).isNotBlank();
+        assertThat(jwt.getIssuedAt()).isNotNull();
+        assertThat(jwt.getExpiresAt()).isNotNull();
+        assertThat(Duration.between(jwt.getIssuedAt(), jwt.getExpiresAt()))
+                .isEqualTo(Duration.ofMinutes(15));
+    }
 
     @Test
     void registerPersistsPersonalDataAndArgon2Hash() throws Exception {

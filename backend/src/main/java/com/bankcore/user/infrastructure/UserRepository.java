@@ -23,4 +23,12 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from User u where lower(u.email) = lower(:email)")
     Optional<User> findByEmailForUpdate(@Param("email") String email);
+
+    /**
+     * Serializes account creation per customer so the five-open-account limit
+     * cannot be exceeded by concurrent requests.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from User u where u.id = :id")
+    Optional<User> findByIdForUpdate(@Param("id") UUID id);
 }

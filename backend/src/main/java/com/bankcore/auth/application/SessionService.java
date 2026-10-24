@@ -63,7 +63,7 @@ public class SessionService {
 
     @Transactional
     public AccessToken refresh(String rawRefreshToken) {
-        Session session = sessions.findByRefreshTokenHashWithUser(refreshTokenHasher.hash(rawRefreshToken))
+        Session session = sessions.findByRefreshTokenHashWithUserForUpdate(refreshTokenHasher.hash(rawRefreshToken))
                 .orElseThrow(() -> new UnauthorizedException(ErrorCode.INVALID_REFRESH_TOKEN));
 
         Instant now = Instant.now(clock);
@@ -79,7 +79,7 @@ public class SessionService {
 
     @Transactional
     public void logout(String rawRefreshToken) {
-        sessions.findByRefreshTokenHash(refreshTokenHasher.hash(rawRefreshToken))
+        sessions.findByRefreshTokenHashForUpdate(refreshTokenHasher.hash(rawRefreshToken))
                 .ifPresent(session -> {
                     if (!session.isRevoked()) {
                         session.revoke(Instant.now(clock));

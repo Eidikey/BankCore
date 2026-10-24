@@ -147,6 +147,34 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
 Tras 3 intentos fallidos la cuenta se bloquea 15 minutos. Los intentos durante
 el bloqueo no reinician el temporizador.
 
+### Cuentas
+
+Crear una cuenta propia (máximo 5 cuentas no cerradas; se crea `ACTIVA`, tipo
+`CUENTA_CORRIENTE`, saldo `0.00` y número de 10 dígitos `10XXXXXXXX`):
+
+```bash
+curl -X POST http://localhost:8080/api/v1/accounts \
+  -H "Authorization: Bearer <access-token>"
+```
+
+Listar todas las cuentas propias, incluidas las cerradas:
+
+```bash
+curl http://localhost:8080/api/v1/accounts \
+  -H "Authorization: Bearer <access-token>"
+```
+
+Consultar una cuenta propia por UUID interno:
+
+```bash
+curl http://localhost:8080/api/v1/accounts/<uuid> \
+  -H "Authorization: Bearer <access-token>"
+```
+
+Si la cuenta pertenece a otro cliente, la respuesta es `404 ACCOUNT_NOT_FOUND`
+para no filtrar su existencia. Las cuentas cerradas siguen visibles en el
+listado y no cuentan para el límite de 5.
+
 Tests:
 
 ```bash
@@ -178,7 +206,7 @@ docker compose up -d
 cd backend && set -a; source ../.env; set +a && ./mvnw verify
 ```
 
-Éxito = `BUILD SUCCESS` con `Tests run: 32/32` unitarios y `12/12` de integración,
+Éxito = `BUILD SUCCESS` con `Tests run: 42/42` unitarios y `17/17` de integración,
 y `http://localhost:8080/swagger-ui.html` responde.
 
 ## 7. Problemas comunes
